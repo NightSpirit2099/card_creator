@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🚀 Card Creator v4.1 - Modular Architecture
 
 > Sistema extensível para criação de cards com arquitetura baseada em plugins e princípios SOLID.
@@ -151,3 +152,7 @@ Desenvolvido com foco em:
 ---
 
 *Arquitetura pensada para desenvolvimento colaborativo com IA* 🤖✨
+=======
+# card_creator
+criador de cards automatizado
+>>>>>>> b105450f70126c80982669550aff63bdfa59c071
