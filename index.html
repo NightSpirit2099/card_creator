@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Card Creator v4.1 - Arquitetura Refatorada</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="controls-panel" class="controls-panel">
+            <h1>Card Creator <span class="version-badge">v4.1 - Refatorado</span><span class="fix-badge">SOLID</span></h1>
+            
+            <div class="architecture-info">
+                <div>
+                    <span class="architecture-badge">Plugin System</span>
+                    <span class="architecture-badge">Adaptive Engine</span>
+                    <span class="architecture-badge">SOLID Principles</span>
+                    <span class="architecture-badge">Modular Design</span>
+                </div>
+                <div style="margin-top: 0.5rem; color: #475569;">
+                    Sistema extensível com código modularizado seguindo as melhores práticas de design.
+                </div>
+            </div>
+            
+            <div class="system-status">
+                <div id="statusIndicator" class="status-indicator"></div>
+                <span id="statusText">Sistema Operacional</span>
+            </div>
+            
+            <div class="global-control">
+                <h3>Instrumentos de Design</h3>
+                <div class="control-group">
+                    <label for="scale-slider">Estilo da Escala <span id="scale-label" class="slider-label"></span></label>
+                    <div class="slider-control">
+                        <span>Suave</span>
+                        <input type="range" id="scale-slider" min="1" max="4" step="1" value="1">
+                        <span>Dinâmica</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="contrast-slider">Contraste Global <span id="contrast-label" class="slider-label"></span></label>
+                    <div class="slider-control">
+                        <span>Pianissimo</span>
+                        <input type="range" id="contrast-slider" min="1" max="5" step="1" value="3">
+                        <span>Fortissimo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="global-control">
+                <h3>Adicionar Bloco</h3>
+                <div class="plugin-selector" id="pluginSelector">
+                    </div>
+                <button id="addBlockBtn" class="btn-primary">Adicionar Bloco Selecionado</button>
+            </div>
+            
+            <div id="errorContainer"></div>
+            <div id="blocksListContainer"></div>
+            
+            <div class="debug-panel">
+                <h4>Debug Info & Architecture</h4>
+                <div id="debugInfo" class="debug-info"></div>
+            </div>
+        </div>
+
+        <div class="preview-panel">
+            <h2>Pré-visualização</h2>
+            <div id="cardPreview" class="card">
+                <div id="cardContent" class="card-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script type="module" src="src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Card Creator v4.1 - Arquitetura Extensível (Fase 2) - CORRIGIDO</title>
+    <style>
+        :root {
+            --card-width: 400px;
+            --card-height: 400px;
+            --primary-color: #1e40af;
+            --error-color: #dc2626;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --info-color: #0ea5e9;
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #f1f5f9; 
+            margin: 0;
+            padding: 2rem;
+            color: #334155;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .controls-panel, .preview-panel {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        
+        h1, h2, h3 { color: #1e293b; margin-top: 0; }
+        
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #1e40af, #3b82f6);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        .fix-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #059669, #10b981);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        .global-control {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            background: #f8fafc;
+        }
+        
+        .control-group { margin-bottom: 1rem; }
+        .control-group:last-child { margin-bottom: 0; }
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+        
+        .slider-label {
+            font-weight: normal;
+            font-size: 0.9rem;
+            color: #1e40af;
+            background: #eef2ff;
+            padding: 0.1rem 0.5rem;
+            border-radius: 99px;
+        }
+        
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .slider-control span {
+            font-size: 0.8rem;
+            color: #64748b;
+            min-width: 60px;
+        }
+        .slider-control span:last-child { text-align: right; }
+        .slider-control input[type="range"] {
+            flex-grow: 1;
+        }
+
+        /* Plugin System UI */
+        .plugin-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .plugin-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .plugin-option:hover {
+            border-color: var(--primary-color);
+            background: #eef2ff;
+        }
+        
+        .plugin-option.selected {
+            border-color: var(--primary-color);
+            background: #eef2ff;
+            box-shadow: 0 0 0 1px var(--primary-color);
+        }
+        
+        .plugin-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .plugin-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        #blocksListContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .block-control {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            background: #f8fafc;
+        }
+        
+        .block-control.text { border-left: 4px solid #3b82f6; }
+        .block-control.image { border-left: 4px solid #10b981; }
+        
+        .drag-handle {
+            font-size: 1.5rem;
+            color: #94a3b8;
+            cursor: grab;
+            padding-top: 0.5rem;
+        }
+        .drag-handle:active { cursor: grabbing; }
+        
+        .block-content { flex-grow: 1; }
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .block-type-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .block-type-icon {
+            font-size: 1rem;
+        }
+        
+        .hierarchy-value { 
+            font-weight: 600; 
+            color: #475569; 
+            font-size: 0.9rem; 
+        }
+        
+        .block-remove-btn {
+            background: none; 
+            border: none; 
+            color: #94a3b8;
+            cursor: pointer; 
+            font-size: 1.5rem; 
+            line-height: 1;
+        }
+        .block-remove-btn:hover { color: var(--error-color); }
+        
+        .block-content-input {
+            width: 100%;
+            min-height: 60px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        
+        .block-image-input {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .image-preview {
+            max-width: 100px;
+            max-height: 60px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .sortable-ghost {
+            background: #eef2ff;
+            opacity: 0.7;
+        }
+
+        .card { 
+            width: var(--card-width); 
+            height: var(--card-height); 
+            background: #0f172a; 
+            color: white; 
+            padding: 2rem; 
+            border-radius: 16px; 
+            margin: 1rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            max-width: 100%;
+            width: auto;
+        }
+        
+        .card-element {
+            text-align: center;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+        }
+        
+        .card-element.image {
+            max-width: 150px;
+            max-height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: var(--primary-color); 
+            color: white;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background: #1e3a8a;
+        }
+        
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+        
+        .success-message {
+            color: var(--success-color);
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+        
+        .debug-panel {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            min-height: 140px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+        
+        .debug-panel h4 {
+            margin: 0 0 0.5rem 0;
+            color: #64748b;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .debug-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.7rem;
+        }
+        
+        .debug-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #e2e8f0;
+            min-height: 20px;
+        }
+        
+        .debug-key {
+            font-weight: 600;
+            color: #475569;
+            flex: 0 0 auto;
+        }
+        
+        .debug-value {
+            color: #64748b;
+            font-family: 'Courier New', monospace;
+            text-align: right;
+            flex: 0 0 auto;
+            min-width: 40px;
+        }
+        
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+        }
+        
+        .status-indicator.error {
+            background: var(--error-color);
+        }
+        
+        .status-indicator.warning {
+            background: var(--warning-color);
+        }
+        
+        .architecture-info {
+            background: linear-gradient(135deg, #eef2ff, #f0f9ff);
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .architecture-badge {
+            display: inline-block;
+            background: var(--info-color);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="controls-panel" class="controls-panel">
+            <h1>Card Creator <span class="version-badge">v4.1 - Fase 2</span><span class="fix-badge">CORRIGIDO</span></h1>
+            
+            <div class="architecture-info">
+                <div>
+                    <span class="architecture-badge">Plugin System</span>
+                    <span class="architecture-badge">Adaptive Engine</span>
+                    <span class="architecture-badge">SOLID Principles</span>
+                    <span class="architecture-badge">Bug Fix</span>
+                </div>
+                <div style="margin-top: 0.5rem; color: #475569;">
+                    Sistema extensível com plugins para diferentes tipos de conteúdo - Correção aplicada para entrada de texto
+                </div>
+            </div>
+            
+            <div class="system-status">
+                <div id="statusIndicator" class="status-indicator"></div>
+                <span id="statusText">Sistema Operacional</span>
+            </div>
+            
+            <div class="global-control">
+                <h3>Instrumentos de Design</h3>
+                <div class="control-group">
+                    <label for="scale-slider">Estilo da Escala <span id="scale-label" class="slider-label"></span></label>
+                    <div class="slider-control">
+                        <span>Suave</span>
+                        <input type="range" id="scale-slider" min="1" max="4" step="1" value="1">
+                        <span>Dinâmica</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="contrast-slider">Contraste Global <span id="contrast-label" class="slider-label"></span></label>
+                    <div class="slider-control">
+                        <span>Pianissimo</span>
+                        <input type="range" id="contrast-slider" min="1" max="5" step="1" value="3">
+                        <span>Fortissimo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="global-control">
+                <h3>Adicionar Bloco</h3>
+                <div class="plugin-selector" id="pluginSelector">
+                    <!-- Plugins will be dynamically populated -->
+                </div>
+                <button id="addBlockBtn" class="btn-primary">Adicionar Bloco Selecionado</button>
+            </div>
+            
+            <div id="errorContainer"></div>
+            <div id="blocksListContainer"></div>
+            
+            <div class="debug-panel">
+                <h4>Debug Info & Architecture</h4>
+                <div id="debugInfo" class="debug-info"></div>
+            </div>
+        </div>
+
+        <div class="preview-panel">
+            <h2>Pré-visualização</h2>
+            <div id="cardPreview" class="card">
+                <div id="cardContent" class="card-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+    <script>
+        "use strict";
+        
+        // ===== TIPOS E INTERFACES (Phase 2 Extensions) =====
+        
+        /**
+         * @typedef {'text'|'image'} BlockType
+         */
+        
+        /**
+         * @typedef {Object} BlockContent
+         * @property {string} type - Tipo do conteúdo
+         * @property {*} data - Dados específicos do tipo
+         */
+        
+        /**
+         * @typedef {Object} EnhancedBlock
+         * @property {string} id - Identificador único
+         * @property {BlockType} type - Tipo do bloco
+         * @property {number} order - Ordem do bloco
+         * @property {BlockContent} content - Conteúdo tipado do bloco
+         * @property {number} hierarchy - Nível hierárquico calculado
+         */
+        
+        /**
+         * @typedef {Object} ContentAnalysis
+         * @property {boolean} hasImages - Contém imagens
+         * @property {boolean} hasOnlyText - Apenas texto
+         * @property {number} textDensity - Densidade de texto (0-1)
+         * @property {number} totalBlocks - Total de blocos
+         * @property {string} dominantType - Tipo dominante
+         */
+        
+        // ===== CORTE: src/utils/result.js - INÍCIO =====
+        class Result {
+            constructor(isSuccess, value, error) {
+                this.isSuccess = isSuccess;
+                this.isFailure = !isSuccess;
+                this.value = value;
+                this.error = error;
+            }
+            
+            static success(value) {
+                return new Result(true, value, null);
+            }
+            
+            static failure(error) {
+                return new Result(false, null, error);
+            }
+            
+            map(fn) {
+                if (this.isFailure) return this;
+                try {
+                    return Result.success(fn(this.value));
+                } catch (error) {
+                    return Result.failure(error);
+                }
+            }
+        }
+        // ===== CORTE: src/utils/result.js - FIM =====
+        
+        // ===== CORTE: src/utils/customErrors.js - INÍCIO =====
+        class CardCreatorError extends Error {
+            constructor(message, code, context = {}) {
+                super(message);
+                this.name = 'CardCreatorError';
+                this.code = code;
+                this.context = context;
+            }
+        }
+        
+        class LayoutError extends CardCreatorError {
+            constructor(message, context = {}) {
+                super(message, 'LAYOUT_ERROR', context);
+                this.name = 'LayoutError';
+            }
+        }
+        
+        class ValidationError extends CardCreatorError {
+            constructor(message, context = {}) {
+                super(message, 'VALIDATION_ERROR', context);
+                this.name = 'ValidationError';
+            }
+        }
+        // ===== CORTE: src/utils/customErrors.js - FIM =====
+        
+        // ===== CORTE: src/utils/simpleObservable.js - INÍCIO =====
+        class SimpleObservable {
+            constructor(initialValue) {
+                this._value = initialValue;
+                this._observers = [];
+            }
+            
+            get value() {
+                return this._value;
+            }
+            
+            set value(newValue) {
+                if (this._value !== newValue) {
+                    this._value = newValue;
+                    this._notifyObservers(newValue);
+                }
+            }
+            
+            subscribe(observer) {
+                this._observers.push(observer);
+                observer(this._value);
+                
+                return () => {
+                    const index = this._observers.indexOf(observer);
+                    if (index > -1) {
+                        this._observers.splice(index, 1);
+                    }
+                };
+            }
+            
+            _notifyObservers(value) {
+                this._observers.forEach(observer => {
+                    try {
+                        observer(value);
+                    } catch (error) {
+                        console.error('Error in observer:', error);
+                    }
+                });
+            }
+        }
+        // ===== CORTE: src/utils/simpleObservable.js - FIM =====
+        
+        // ===== CORTE: src/utils/debouncer.js - INÍCIO =====
+        class Debouncer {
+            constructor(delay = 250) {
+                this.delay = delay;
+                this.timeoutId = null;
+            }
+            
+            execute(fn) {
+                clearTimeout(this.timeoutId);
+                this.timeoutId = setTimeout(fn, this.delay);
+            }
+        }
+        // ===== CORTE: src/utils/debouncer.js - FIM =====
+        
+        // ===== CORTE: src/utils/constants.js - INÍCIO =====
+        const SCALE_OPTIONS = [
+            { name: "Suave", value: 1.200 },
+            { name: "Clássica", value: 1.333 },
+            { name: "Impactante", value: 1.500 },
+            { name: "Dinâmica", value: 1.618 }
+        ];
+        // ===== CORTE: src/utils/constants.js - FIM =====
+        
+        // ===== CORTE: src/plugins/blockPlugin.js - INÍCIO =====
+        /**
+         * Interface base para plugins de bloco
+         */
+        class BlockPlugin {
+            constructor(type, name, icon) {
+                this.type = type;
+                this.name = name;
+                this.icon = icon;
+            }
+            
+            /**
+             * Cria um novo bloco deste tipo
+             * @param {*} data - Dados para o bloco
+             * @returns {Result<EnhancedBlock>}
+             */
+            createBlock(data) {
+                throw new Error('createBlock must be implemented by subclass');
+            }
+            
+            /**
+             * Renderiza o editor do bloco
+             * @param {EnhancedBlock} block - Bloco a ser editado
+             * @returns {HTMLElement}
+             */
+            createEditor(block) {
+                throw new Error('createEditor must be implemented by subclass');
+            }
+            
+            /**
+             * Mede as dimensões do bloco
+             * @param {EnhancedBlock} block - Bloco a ser medido
+             * @param {Object} context - Contexto de medição
+             * @returns {Promise<Object>}
+             */
+            async measure(block, context) {
+                throw new Error('measure must be implemented by subclass');
+            }
+            
+            /**
+             * Renderiza o bloco no card
+             * @param {EnhancedBlock} block - Bloco a ser renderizado
+             * @param {Object} context - Contexto de renderização
+             * @returns {HTMLElement}
+             */
+            render(block, context) {
+                throw new Error('render must be implemented by subclass');
+            }
+            
+            /**
+             * Valida dados do bloco
+             * @param {*} data - Dados a serem validados
+             * @returns {Result<*>}
+             */
+            validate(data) {
+                return Result.success(data);
+            }
+        }
+        // ===== CORTE: src/plugins/blockPlugin.js - FIM =====
+        
+        // ===== CORTE: src/plugins/pluginRegistry.js - INÍCIO =====
+        class BlockPluginRegistry {
+            constructor() {
+                this.plugins = new Map();
+                this.selectedType = 'text';
+            }
+            
+            register(plugin) {
+                if (!(plugin instanceof BlockPlugin)) {
+                    throw new Error('Plugin must extend BlockPlugin');
+                }
+                this.plugins.set(plugin.type, plugin);
+            }
+            
+            get(type) {
+                return this.plugins.get(type);
+            }
+            
+            getAll() {
+                return Array.from(this.plugins.values());
+            }
+            
+            createBlock(type, data) {
+                const plugin = this.plugins.get(type);
+                if (!plugin) {
+                    return Result.failure(new Error(`Unknown block type: ${type}`));
+                }
+                return plugin.createBlock(data);
+            }
+            
+            setSelectedType(type) {
+                if (this.plugins.has(type)) {
+                    this.selectedType = type;
+                    return Result.success(type);
+                }
+                return Result.failure(new Error(`Plugin type ${type} not found`));
+            }
+            
+            getSelectedType() {
+                return this.selectedType;
+            }
+        }
+        // ===== CORTE: src/plugins/pluginRegistry.js - FIM =====
+        
+        // ===== CORTE: src/plugins/textBlockPlugin.js - INÍCIO =====
+        class TextBlockPlugin extends BlockPlugin {
+            constructor() {
+                super('text', 'Texto', '📝');
+            }
+            
+            createBlock(data = 'Novo Bloco de Texto') {
+                try {
+                    // CORREÇÃO: Garantir que data seja sempre uma string
+                    let textData = data;
+                    
+                    // Se data é um objeto, extrair a propriedade text
+                    if (typeof data === 'object' && data !== null) {
+                        if (data.text !== undefined) {
+                            textData = data.text;
+                        } else if (data.content !== undefined) {
+                            textData = data.content;
+                        } else {
+                            textData = String(data);
+                        }
+                    }
+                    
+                    // Se não é string, converter para string
+                    if (typeof textData !== 'string') {
+                        textData = String(textData);
+                    }
+                    
+                    const validationResult = this.validate(textData);
+                    if (validationResult.isFailure) {
+                        return validationResult;
+                    }
+                    
+                    return Result.success({
+                        type: 'text',
+                        content: {
+                            type: 'text',
+                            data: { text: validationResult.value }
+                        }
+                    });
+                } catch (error) {
+                    return Result.failure(new ValidationError(error.message));
+                }
+            }
+            
+            createEditor(block) {
+                const textarea = document.createElement('textarea');
+                textarea.className = 'block-content-input';
+                textarea.rows = 3;
+                textarea.value = block.content.data.text;
+                return textarea;
+            }
+            
+            async measure(block, context) {
+                return new Promise((resolve) => {
+                    const testEl = document.createElement('div');
+                    testEl.style.cssText = `
+                        position: absolute;
+                        visibility: hidden;
+                        width: ${context.width}px;
+                        font-size: ${context.fontSize}px;
+                        line-height: ${context.lineHeight};
+                    `;
+                    testEl.textContent = block.content.data.text;
+                    document.body.appendChild(testEl);
+                    
+                    const height = testEl.offsetHeight;
+                    const lineCount = Math.round(height / (context.fontSize * context.lineHeight));
+                    
+                    document.body.removeChild(testEl);
+                    resolve({ height, lineCount });
+                });
+            }
+            
+            render(block, context) {
+                const el = document.createElement('div');
+                el.className = 'card-element';
+                el.style.fontSize = `${context.fontSize}px`;
+                el.style.lineHeight = context.lineHeight;
+                el.textContent = block.content.data.text;
+                return el;
+            }
+            
+            validate(data) {
+                // CORREÇÃO: Validação mais robusta
+                if (data === null || data === undefined) {
+                    return Result.failure(new ValidationError('Conteúdo não pode ser nulo ou indefinido'));
+                }
+                
+                // Converter para string se não for
+                let textData = data;
+                if (typeof data !== 'string') {
+                    textData = String(data);
+                }
+                
+                const trimmed = textData.trim();
+                if (trimmed.length === 0) {
+                    return Result.failure(new ValidationError('Texto não pode estar vazio'));
+                }
+                
+                if (trimmed.length > 200) {
+                    return Result.failure(new ValidationError('Texto não pode exceder 200 caracteres'));
+                }
+                
+                return Result.success(trimmed);
+            }
+        }
+        // ===== CORTE: src/plugins/textBlockPlugin.js - FIM =====
+        
+        // ===== CORTE: src/plugins/imageBlockPlugin.js - INÍCIO =====
+        class ImageBlockPlugin extends BlockPlugin {
+            constructor() {
+                super('image', 'Imagem', '🖼️');
+            }
+            
+            createBlock(data = { src: '', alt: 'Imagem', fit: 'cover' }) {
+                try {
+                    const validationResult = this.validate(data);
+                    if (validationResult.isFailure) {
+                        return validationResult;
+                    }
+                    
+                    return Result.success({
+                        type: 'image',
+                        content: {
+                            type: 'image',
+                            data: validationResult.value
+                        }
+                    });
+                } catch (error) {
+                    return Result.failure(new ValidationError(error.message));
+                }
+            }
+            
+            createEditor(block) {
+                const container = document.createElement('div');
+                
+                const input = document.createElement('input');
+                input.type = 'url';
+                input.className = 'block-image-input';
+                input.placeholder = 'URL da imagem...';
+                input.value = block.content.data.src;
+                
+                const altInput = document.createElement('input');
+                altInput.type = 'text';
+                altInput.className = 'block-image-input';
+                altInput.placeholder = 'Texto alternativo...';
+                altInput.value = block.content.data.alt;
+                
+                container.appendChild(input);
+                container.appendChild(altInput);
+                
+                if (block.content.data.src) {
+                    const preview = document.createElement('img');
+                    preview.className = 'image-preview';
+                    preview.src = block.content.data.src;
+                    preview.alt = block.content.data.alt;
+                    preview.onerror = () => preview.style.display = 'none';
+                    container.appendChild(preview);
+                }
+                
+                return container;
+            }
+            
+            async measure(block, context) {
+                return new Promise((resolve) => {
+                    if (!block.content.data.src) {
+                        resolve({ height: 60, lineCount: 1 });
+                        return;
+                    }
+                    
+                    const img = new Image();
+                    img.onload = () => {
+                        const aspectRatio = img.height / img.width;
+                        const width = Math.min(150, context.width * 0.8);
+                        const height = width * aspectRatio;
+                        resolve({ height: Math.min(height, 100), lineCount: 1 });
+                    };
+                    img.onerror = () => resolve({ height: 60, lineCount: 1 });
+                    img.src = block.content.data.src;
+                });
+            }
+            
+            render(block, context) {
+                if (!block.content.data.src) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'card-element';
+                    placeholder.textContent = '🖼️ Imagem';
+                    placeholder.style.fontSize = `${context.fontSize}px`;
+                    return placeholder;
+                }
+                
+                const img = document.createElement('img');
+                img.className = 'card-element image';
+                img.src = block.content.data.src;
+                img.alt = block.content.data.alt;
+                img.onerror = () => {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'card-element';
+                    fallback.textContent = '🖼️ Erro na imagem';
+                    fallback.style.fontSize = `${context.fontSize * 0.8}px`;
+                    img.parentNode?.replaceChild(fallback, img);
+                };
+                return img;
+            }
+            
+            validate(data) {
+                if (!data || typeof data !== 'object') {
+                    return Result.failure(new ValidationError('Dados da imagem devem ser um objeto'));
+                }
+                
+                if (!data.src || typeof data.src !== 'string') {
+                    return Result.failure(new ValidationError('URL da imagem é obrigatória'));
+                }
+                
+                try {
+                    new URL(data.src);
+                } catch {
+                    return Result.failure(new ValidationError('URL da imagem inválida'));
+                }
+                
+                return Result.success({
+                    src: data.src.trim(),
+                    alt: (data.alt || 'Imagem').trim(),
+                    fit: data.fit || 'cover'
+                });
+            }
+        }
+        // ===== CORTE: src/plugins/imageBlockPlugin.js - FIM =====
+        
+        // ===== CORTE: src/analysis/contentAnalyzer.js - INÍCIO =====
+        class ContentAnalyzer {
+            analyze(blocks) {
+                const analysis = {
+                    hasImages: false,
+                    hasOnlyText: true,
+                    textDensity: 0,
+                    totalBlocks: blocks.length,
+                    dominantType: 'text'
+                };
+                
+                if (blocks.length === 0) {
+                    return analysis;
+                }
+                
+                const typeCounts = blocks.reduce((counts, block) => {
+                    counts[block.type] = (counts[block.type] || 0) + 1;
+                    return counts;
+                }, {});
+                
+                analysis.hasImages = typeCounts.image > 0;
+                analysis.hasOnlyText = typeCounts.text === blocks.length;
+                analysis.textDensity = (typeCounts.text || 0) / blocks.length;
+                
+                let maxCount = 0;
+                for (const [type, count] of Object.entries(typeCounts)) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        analysis.dominantType = type;
+                    }
+                }
+                
+                return analysis;
+            }
+        }
+        // ===== CORTE: src/analysis/contentAnalyzer.js - FIM =====
+        
+        // ===== CORTE: src/layout/layoutComposer.js - INÍCIO =====
+        class LayoutComposer {
+            constructor(blocks, ratio) {
+                this.blocks = [...blocks].sort((a, b) => b.hierarchy - a.hierarchy);
+                this.ratio = ratio;
+            }
+            
+            async findBestCandidate() {
+                try {
+                    const candidates = this._generateCandidates();
+                    let bestResult = { badness: Infinity, candidate: null };
+                    
+                    for (const candidate of candidates) {
+                        const evaluation = await this._evaluateCandidate(candidate);
+                        if (evaluation.badness < bestResult.badness) {
+                            bestResult = { badness: evaluation.badness, candidate };
+                        }
+                    }
+                    
+                    if (bestResult.candidate === null) {
+                        return Result.failure(new LayoutError('Nenhum candidato válido encontrado'));
+                    }
+                    
+                    return Result.success({
+                        ...bestResult.candidate,
+                        badness: bestResult.badness,
+                        ratio: this.ratio
+                    });
+                    
+                } catch (error) {
+                    return Result.failure(new LayoutError(
+                        'Erro na composição de layout: ' + error.message
+                    ));
+                }
+            }
+            
+            _generateCandidates() {
+                let baseFontSizes;
+                if (this.ratio >= 1.6) baseFontSizes = [5, 6, 7, 8, 10];
+                else if (this.ratio >= 1.5) baseFontSizes = [6, 7, 8, 10, 12];
+                else baseFontSizes = [8, 10, 12, 14, 16, 20];
+                
+                const lineHeights = [1.1, 1.2, 1.3];
+                const candidates = [];
+                
+                for (const baseFontSize of baseFontSizes) {
+                    for (const lineHeight of lineHeights) {
+                        candidates.push({ baseFontSize, lineHeight });
+                    }
+                }
+                
+                return candidates;
+            }
+            
+            async _evaluateCandidate(candidate) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const testContainer = document.createElement('div');
+                        testContainer.style.cssText = 'position: absolute; visibility: hidden; width: 336px;';
+                        document.body.appendChild(testContainer);
+                        
+                        const lowestHierarchy = Math.min(...this.blocks.map(b => b.hierarchy));
+                        const targetSizes = this.blocks.map(block => 
+                            candidate.baseFontSize * Math.pow(this.ratio, block.hierarchy - lowestHierarchy)
+                        );
+                        
+                        let totalHeight = 0;
+                        const actualSizes = [];
+                        const lineCounts = [];
+                        const baseGap = candidate.baseFontSize * candidate.lineHeight * 0.5;
+                        const totalGapHeight = (this.blocks.length - 1) * baseGap;
+                        
+                        for (let i = 0; i < this.blocks.length; i++) {
+                            const el = document.createElement('div');
+                            el.style.cssText = `font-size: ${targetSizes[i]}px; line-height: ${candidate.lineHeight};`;
+                            
+                            // Handle different block types
+                            if (this.blocks[i].content?.data?.text) {
+                                el.textContent = this.blocks[i].content.data.text;
+                            } else if (this.blocks[i].content) {
+                                el.textContent = this.blocks[i].content;
+                            } else {
+                                el.textContent = 'Sample text';
+                            }
+                            
+                            testContainer.appendChild(el);
+                            
+                            actualSizes[i] = parseFloat(window.getComputedStyle(el).fontSize);
+                            totalHeight += el.offsetHeight;
+                            lineCounts[i] = Math.round(el.offsetHeight / (actualSizes[i] * candidate.lineHeight));
+                        }
+                        
+                        const totalBlueprintHeight = totalHeight + totalGapHeight;
+                        const badness = this._calculateBadness({
+                            actualSizes,
+                            targetSizes,
+                            lineCounts,
+                            totalBlueprintHeight
+                        });
+                        
+                        document.body.removeChild(testContainer);
+                        resolve({ badness });
+                        
+                    } catch (error) {
+                        reject(new LayoutError('Erro na avaliação do candidato: ' + error.message));
+                    }
+                });
+            }
+            
+            _calculateBadness({ actualSizes, targetSizes, lineCounts, totalBlueprintHeight }) {
+                let totalBadness = 0;
+                
+                if (actualSizes.length > 0) {
+                    totalBadness += (100 - actualSizes[0]) * 300;
+                }
+                
+                let distortionPenalty = 0;
+                for (let i = 0; i < actualSizes.length; i++) {
+                    const distortion = Math.abs(actualSizes[i] - targetSizes[i]) / targetSizes[i] * 100;
+                    distortionPenalty += Math.pow(distortion, 2);
+                }
+                totalBadness += distortionPenalty;
+                
+                let lineCountPenalty = 0;
+                for (let i = 0; i < lineCounts.length; i++) {
+                    if (lineCounts[i] > 1) {
+                        lineCountPenalty += (lineCounts[i] - 1) * Math.pow(this.blocks[i].hierarchy, 2) * 50;
+                    }
+                }
+                totalBadness += lineCountPenalty;
+                
+                const requiredZoom = 336 / totalBlueprintHeight;
+                if (requiredZoom < 0.9) {
+                    totalBadness += Math.pow(1 - requiredZoom, 2) * 50000;
+                }
+                
+                return totalBadness;
+            }
+        }
+        // ===== CORTE: src/layout/layoutComposer.js - FIM =====
+        
+        // ===== CORTE: src/layout/layoutOptimizer.js - INÍCIO =====
+        class LayoutOptimizer {
+            constructor(blocks, layout) {
+                this.blocks = blocks;
+                this.layout = layout;
+            }
+            
+            async optimizeZoom() {
+                try {
+                    let minZoom = 0.1;
+                    let maxZoom = 5;
+                    let bestZoom = 1;
+                    
+                    for (let i = 0; i < 8; i++) {
+                        const guessZoom = (minZoom + maxZoom) / 2;
+                        const fits = await this._checkZoomFits(guessZoom);
+                        
+                        if (fits) {
+                            bestZoom = guessZoom;
+                            minZoom = guessZoom;
+                        } else {
+                            maxZoom = guessZoom;
+                        }
+                    }
+                    
+                    return Result.success({
+                        ...this.layout,
+                        zoom: bestZoom,
+                        blocks: this.blocks
+                    });
+                    
+                } catch (error) {
+                    return Result.failure(new LayoutError(
+                        'Erro na otimização de zoom: ' + error.message
+                    ));
+                }
+            }
+            
+            async _checkZoomFits(zoom) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const testContainer = document.createElement('div');
+                        testContainer.style.cssText = 'position: absolute; visibility: hidden; width: 336px;';
+                        document.body.appendChild(testContainer);
+                        
+                        const lowestHierarchy = Math.min(...this.blocks.map(b => b.hierarchy));
+                        let totalHeight = 0;
+                        const baseGap = this.layout.baseFontSize * this.layout.lineHeight * 0.5;
+                        const totalGapHeight = (this.blocks.length - 1) * (baseGap * zoom);
+                        
+                        for (const block of this.blocks) {
+                            const el = document.createElement('div');
+                            const fontSize = this.layout.baseFontSize * 
+                                Math.pow(this.layout.ratio, block.hierarchy - lowestHierarchy) * zoom;
+                            el.style.cssText = `font-size: ${fontSize}px; line-height: ${this.layout.lineHeight};`;
+                            
+                            if (block.content?.data?.text) {
+                                el.textContent = block.content.data.text;
+                            } else if (block.content) {
+                                el.textContent = block.content;
+                            } else {
+                                el.textContent = 'Sample text';
+                            }
+                            
+                            testContainer.appendChild(el);
+                            totalHeight += el.offsetHeight;
+                        }
+                        
+                        const fits = totalHeight + totalGapHeight <= 336;
+                        document.body.removeChild(testContainer);
+                        resolve(fits);
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+        }
+        // ===== CORTE: src/layout/layoutOptimizer.js - FIM =====
+        
+        // ===== CORTE: src/layout/adaptiveLayoutComposer.js - INÍCIO =====
+        class LayoutStrategy {
+            constructor(name) {
+                this.name = name;
+            }
+            
+            async compose(blocks, context) {
+                throw new Error('compose must be implemented by subclass');
+            }
+        }
+        
+        class TextOptimizedStrategy extends LayoutStrategy {
+            constructor() {
+                super('text-optimized');
+            }
+            
+            async compose(blocks, context) {
+                const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+                return composer.findBestCandidate();
+            }
+        }
+        
+        class MixedContentStrategy extends LayoutStrategy {
+            constructor() {
+                super('mixed-content');
+            }
+            
+            async compose(blocks, context) {
+                const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+                const result = await composer.findBestCandidate();
+                
+                if (result.isSuccess) {
+                    const adjusted = { ...result.value };
+                    adjusted.baseFontSize = Math.max(adjusted.baseFontSize * 0.9, 6);
+                    return Result.success(adjusted);
+                }
+                
+                return result;
+            }
+        }
+        
+        class BalancedStrategy extends LayoutStrategy {
+            constructor() {
+                super('balanced');
+            }
+            
+            async compose(blocks, context) {
+                const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+                return composer.findBestCandidate();
+            }
+        }
+        
+        class AdaptiveLayoutComposer {
+            constructor() {
+                this.contentAnalyzer = new ContentAnalyzer();
+                this.strategies = new Map();
+                this.pluginRegistry = new BlockPluginRegistry();
+                
+                this.strategies.set('text-optimized', new TextOptimizedStrategy());
+                this.strategies.set('mixed-content', new MixedContentStrategy());
+                this.strategies.set('balanced', new BalancedStrategy());
+            }
+            
+            async createLayout(blocks, config) {
+                try {
+                    if (!blocks || blocks.length === 0) {
+                        return Result.failure(new LayoutError('Nenhum bloco fornecido'));
+                    }
+                    
+                    const analysis = this.contentAnalyzer.analyze(blocks);
+                    const strategy = this.selectOptimalStrategy(analysis, config);
+                    const blocksWithHierarchy = this._calculateHierarchy(blocks, config);
+                    
+                    const candidateResult = await strategy.compose(blocksWithHierarchy, {
+                        config,
+                        analysis
+                    });
+                    
+                    if (candidateResult.isFailure) {
+                        return candidateResult;
+                    }
+                    
+                    const optimizer = new LayoutOptimizer(blocksWithHierarchy, candidateResult.value);
+                    const finalResult = await optimizer.optimizeZoom();
+                    
+                    if (finalResult.isSuccess) {
+                        finalResult.value.strategy = strategy.name;
+                        finalResult.value.analysis = analysis;
+                    }
+                    
+                    return finalResult;
+                    
+                } catch (error) {
+                    return Result.failure(new LayoutError(
+                        'Erro no motor adaptativo: ' + error.message,
+                        { blocks, config }
+                    ));
+                }
+            }
+            
+            selectOptimalStrategy(analysis, config) {
+                if (analysis.hasImages && analysis.textDensity > 0.7) {
+                    return this.strategies.get('mixed-content');
+                }
+                
+                if (analysis.hasOnlyText && analysis.totalBlocks > 3) {
+                    return this.strategies.get('text-optimized');
+                }
+                
+                return this.strategies.get('balanced');
+            }
+            
+            _calculateHierarchy(blocks, config) {
+                const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
+                
+                if (sortedBlocks.length < 2) {
+                    return sortedBlocks.map(block => ({ ...block, hierarchy: 5 }));
+                }
+                
+                const highestHierarchy = 5;
+                const lowestHierarchy = Math.max(1, 6 - config.globalContrast);
+                const range = highestHierarchy - lowestHierarchy;
+                const steps = sortedBlocks.length - 1;
+                
+                return sortedBlocks.map((block, index) => {
+                    const hierarchy = steps === 0 ? 
+                        highestHierarchy : 
+                        highestHierarchy - (index * range / steps);
+                        
+                    return { ...block, hierarchy: Math.round(hierarchy) };
+                });
+            }
+        }
+        // ===== CORTE: src/layout/adaptiveLayoutComposer.js - FIM =====
+        
+        // ===== CORTE: src/renderer/enhancedLayoutRenderer.js - INÍCIO =====
+        class EnhancedLayoutRenderer {
+            constructor() {
+                this.pluginRegistry = new BlockPluginRegistry();
+                this._registerPlugins();
+            }
+            
+            _registerPlugins() {
+                this.pluginRegistry.register(new TextBlockPlugin());
+                this.pluginRegistry.register(new ImageBlockPlugin());
+            }
+            
+            render(layout, targetElementId) {
+                try {
+                    const container = document.getElementById(targetElementId);
+                    if (!container) {
+                        throw new LayoutError(`Elemento ${targetElementId} não encontrado`);
+                    }
+                    
+                    if (!layout || !layout.blocks) {
+                        container.innerHTML = '<div class="card-element" style="color:#ef4444;">Layout inválido</div>';
+                        return Result.failure(new LayoutError('Layout inválido fornecido'));
+                    }
+                    
+                    container.innerHTML = '';
+                    const baseGap = layout.baseFontSize * layout.lineHeight * 0.5;
+                    container.style.gap = `${baseGap * layout.zoom}px`;
+                    
+                    const lowestHierarchy = Math.min(...layout.blocks.map(b => b.hierarchy));
+                    
+                    layout.blocks.forEach(block => {
+                        const plugin = this.pluginRegistry.get(block.type);
+                        
+                        if (plugin) {
+                            const finalSize = layout.baseFontSize * 
+                                Math.pow(layout.ratio, block.hierarchy - lowestHierarchy) * layout.zoom;
+                            
+                            const context = {
+                                fontSize: finalSize,
+                                lineHeight: layout.lineHeight,
+                                zoom: layout.zoom,
+                                width: 336
+                            };
+                            
+                            const element = plugin.render(block, context);
+                            container.appendChild(element);
+                        } else {
+                            // Fallback para blocos sem plugin
+                            const el = document.createElement('div');
+                            el.className = 'card-element';
+                            el.textContent = `⚠️ Plugin ${block.type} não encontrado`;
+                            el.style.color = '#ef4444';
+                            container.appendChild(el);
+                        }
+                    });
+                    
+                    return Result.success('Renderização concluída');
+                    
+                } catch (error) {
+                    return Result.failure(new LayoutError(
+                        'Erro na renderização: ' + error.message,
+                        { layout, targetElementId }
+                    ));
+                }
+            }
+        }
+        // ===== CORTE: src/renderer/enhancedLayoutRenderer.js - FIM =====
+        
+        // ===== CORTE: src/state/enhancedCardState.js - INÍCIO =====
+        class EnhancedCardState {
+            constructor() {
+                this.blocks$ = new SimpleObservable([
+                    { 
+                        id: '1', 
+                        type: 'text',
+                        order: 1, 
+                        content: { type: 'text', data: { text: "Explorando o Futuro da IA" } }
+                    },
+                    { 
+                        id: '2', 
+                        type: 'text',
+                        order: 2, 
+                        content: { type: 'text', data: { text: "Como a IA Generativa Molda Horizontes" } }
+                    },
+                    { 
+                        id: '3', 
+                        type: 'text',
+                        order: 3, 
+                        content: { type: 'text', data: { text: "Última atualização: 31 de julho de 2025" } }
+                    }
+                ]);
+                
+                this.config$ = new SimpleObservable({
+                    globalContrast: 3,
+                    typographicRatio: 1.250
+                });
+                
+                this.layout$ = new SimpleObservable(null);
+                this.errors$ = new SimpleObservable([]);
+                
+                this._nextId = 4;
+                this._debouncer = new Debouncer(250);
+                this.pluginRegistry = new BlockPluginRegistry();
+                
+                this._registerPlugins();
+                
+                this.blocks$.subscribe(() => this._scheduleLayoutUpdate());
+                this.config$.subscribe(() => this._scheduleLayoutUpdate());
+            }
+            
+            _registerPlugins() {
+                this.pluginRegistry.register(new TextBlockPlugin());
+                this.pluginRegistry.register(new ImageBlockPlugin());
+            }
+            
+            // ===== MÉTODOS PÚBLICOS APRIMORADOS =====
+            
+            addBlock(type = null, data = null) {
+                try {
+                    const blockType = type || this.pluginRegistry.getSelectedType();
+                    const plugin = this.pluginRegistry.get(blockType);
+                    
+                    if (!plugin) {
+                        throw new ValidationError(`Plugin ${blockType} não encontrado`);
+                    }
+                    
+                    // CORREÇÃO: Fornecer valor padrão apropriado se data for null
+                    let blockData = data;
+                    if (blockData === null || blockData === undefined) {
+                        if (blockType === 'text') {
+                            blockData = 'Novo Bloco de Texto';
+                        } else if (blockType === 'image') {
+                            blockData = { src: '', alt: 'Imagem', fit: 'cover' };
+                        }
+                    }
+                    
+                    const blockResult = plugin.createBlock(blockData);
+                    if (blockResult.isFailure) {
+                        throw blockResult.error;
+                    }
+                    
+                    const blocks = [...this.blocks$.value];
+                    const newOrder = blocks.length > 0 ? Math.max(...blocks.map(b => b.order)) + 1 : 1;
+                    
+                    const newBlock = {
+                        id: String(this._nextId++),
+                        type: blockType,
+                        order: newOrder,
+                        ...blockResult.value
+                    };
+                    
+                    blocks.push(newBlock);
+                    this.blocks$.value = blocks;
+                    
+                    this._clearErrors();
+                    return Result.success(newBlock);
+                    
+                } catch (error) {
+                    this._addError(error);
+                    return Result.failure(error);
+                }
+            }
+            
+            updateBlock(id, updates) {
+                try {
+                    const blocks = [...this.blocks$.value];
+                    const blockIndex = blocks.findIndex(b => b.id === id);
+                    
+                    if (blockIndex === -1) {
+                        throw new ValidationError('Bloco não encontrado', { id });
+                    }
+                    
+                    const block = blocks[blockIndex];
+                    const plugin = this.pluginRegistry.get(block.type);
+                    
+                    if (!plugin) {
+                        throw new ValidationError(`Plugin ${block.type} não encontrado`);
+                    }
+                    
+                    // CORREÇÃO: Melhor handling de updates de conteúdo
+                    let newContent = block.content;
+                    if (updates.content !== undefined) {
+                        // Para blocos de texto, o updates.content pode ser uma string simples
+                        let contentData = updates.content;
+                        if (block.type === 'text' && typeof updates.content === 'string') {
+                            contentData = updates.content;
+                        }
+                        
+                        const updateResult = plugin.createBlock(contentData);
+                        if (updateResult.isFailure) {
+                            throw updateResult.error;
+                        }
+                        newContent = updateResult.value.content;
+                    }
+                    
+                    blocks[blockIndex] = {
+                        ...block,
+                        ...updates,
+                        content: newContent
+                    };
+                    
+                    this.blocks$.value = blocks;
+                    return Result.success(blocks[blockIndex]);
+                    
+                } catch (error) {
+                    this._addError(error);
+                    return Result.failure(error);
+                }
+            }
+            
+            removeBlock(id) {
+                try {
+                    const blocks = this.blocks$.value.filter(b => b.id !== id);
+                    
+                    if (blocks.length === this.blocks$.value.length) {
+                        throw new ValidationError('Bloco não encontrado para remoção', { id });
+                    }
+                    
+                    blocks.forEach((block, index) => block.order = index + 1);
+                    
+                    this.blocks$.value = blocks;
+                    this._clearErrors();
+                    return Result.success(blocks);
+                    
+                } catch (error) {
+                    this._addError(error);
+                    return Result.failure(error);
+                }
+            }
+            
+            reorderBlocks(fromIndex, toIndex) {
+                try {
+                    const blocks = [...this.blocks$.value];
+                    
+                    if (fromIndex < 0 || fromIndex >= blocks.length || 
+                        toIndex < 0 || toIndex >= blocks.length) {
+                        throw new ValidationError('Índices de reordenação inválidos');
+                    }
+                    
+                    const [movedBlock] = blocks.splice(fromIndex, 1);
+                    blocks.splice(toIndex, 0, movedBlock);
+                    
+                    blocks.forEach((block, index) => block.order = index + 1);
+                    
+                    this.blocks$.value = blocks;
+                    return Result.success(blocks);
+                    
+                } catch (error) {
+                    this._addError(error);
+                    return Result.failure(error);
+                }
+            }
+            
+            updateConfig(updates) {
+                try {
+                    const newConfig = { ...this.config$.value, ...updates };
+                    
+                    if (newConfig.globalContrast < 1 || newConfig.globalContrast > 5) {
+                        throw new ValidationError('Contraste global deve estar entre 1 e 5');
+                    }
+                    
+                    if (newConfig.typographicRatio < 1.1 || newConfig.typographicRatio > 2.0) {
+                        throw new ValidationError('Ratio tipográfico deve estar entre 1.1 e 2.0');
+                    }
+                    
+                    this.config$.value = newConfig;
+                    this._clearErrors();
+                    return Result.success(newConfig);
+                    
+                } catch (error) {
+                    this._addError(error);
+                    return Result.failure(error);
+                }
+            }
+            
+            // ===== MÉTODOS PRIVADOS =====
+            
+            _scheduleLayoutUpdate() {
+                this._debouncer.execute(() => {
+                    this._updateLayout();
+                });
+            }
+            
+            async _updateLayout() {
+                try {
+                    const blocks = this.blocks$.value;
+                    const config = this.config$.value;
+                    
+                    if (blocks.length === 0) {
+                        this.layout$.value = Result.success(null);
+                        return;
+                    }
+                    
+                    const layoutEngine = new AdaptiveLayoutComposer();
+                    const result = await layoutEngine.createLayout(blocks, config);
+                    
+                    this.layout$.value = result;
+                    
+                    if (result.isFailure) {
+                        this._addError(result.error);
+                    } else {
+                        this._clearErrors();
+                    }
+                    
+                } catch (error) {
+                    const layoutError = new LayoutError(
+                        'Erro inesperado no motor adaptativo: ' + error.message,
+                        { blocks: this.blocks$.value, config: this.config$.value }
+                    );
+                    
+                    this.layout$.value = Result.failure(layoutError);
+                    this._addError(layoutError);
+                }
+            }
+            
+            _addError(error) {
+                const errors = [...this.errors$.value];
+                errors.push(error);
+                this.errors$.value = errors;
+            }
+            
+            _clearErrors() {
+                this.errors$.value = [];
+            }
+        }
+        // ===== CORTE: src/state/enhancedCardState.js - FIM =====
+        
+        // ===== CORTE: src/ui/enhancedUIController.js - INÍCIO =====
+        class EnhancedUIController {
+            constructor() {
+                this.state = new EnhancedCardState();
+                this.renderer = new EnhancedLayoutRenderer();
+                this.sortableInstance = null;
+                this.debugDebouncer = new Debouncer(100);
+                
+                this._initializeEventListeners();
+                this._initializeStateSubscriptions();
+                this._renderInitialUI();
+            }
+            
+            _initializeEventListeners() {
+                this._renderPluginSelector();
+                
+                const addBtn = document.getElementById('addBlockBtn');
+                if (addBtn) {
+                    addBtn.addEventListener('click', () => this._handleAddBlock());
+                }
+                
+                const scaleSlider = document.getElementById('scale-slider');
+                const contrastSlider = document.getElementById('contrast-slider');
+                
+                if (scaleSlider) {
+                    scaleSlider.addEventListener('input', (e) => this._handleScaleChange(e));
+                }
+                
+                if (contrastSlider) {
+                    contrastSlider.addEventListener('input', (e) => this._handleContrastChange(e));
+                }
+                
+                const controlsPanel = document.getElementById('controls-panel');
+                if (controlsPanel) {
+                    controlsPanel.addEventListener('input', (e) => this._handleBlockInput(e));
+                    controlsPanel.addEventListener('click', (e) => this._handleBlockClick(e));
+                }
+            }
+            
+            _initializeStateSubscriptions() {
+                this.state.blocks$.subscribe((blocks) => {
+                    this._renderBlockControls(blocks);
+                    this._updateDebugInfo();
+                });
+                
+                this.state.config$.subscribe((config) => {
+                    this._updateConfigUI(config);
+                    this._updateDebugInfo();
+                });
+                
+                this.state.layout$.subscribe((layoutResult) => {
+                    if (layoutResult && layoutResult.isSuccess) {
+                        this.renderer.render(layoutResult.value, 'cardContent');
+                        this._updateStatus('success');
+                    } else if (layoutResult && layoutResult.isFailure) {
+                        this._updateStatus('error');
+                    }
+                    this._updateDebugInfo();
+                });
+                
+                this.state.errors$.subscribe((errors) => {
+                    this._renderErrors(errors);
+                    if (errors.length > 0) {
+                        this._updateStatus('error');
+                    }
+                    this._updateDebugInfo();
+                });
+            }
+            
+            _renderInitialUI() {
+                this._renderBlockControls(this.state.blocks$.value);
+                this._updateConfigUI(this.state.config$.value);
+            }
+            
+            _renderPluginSelector() {
+                const container = document.getElementById('pluginSelector');
+                if (!container) return;
+                
+                const plugins = this.state.pluginRegistry.getAll();
+                
+                container.innerHTML = '';
+                plugins.forEach(plugin => {
+                    const option = document.createElement('div');
+                    option.className = 'plugin-option';
+                    if (plugin.type === this.state.pluginRegistry.getSelectedType()) {
+                        option.classList.add('selected');
+                    }
+                    option.dataset.type = plugin.type;
+                    
+                    option.innerHTML = `
+                        <div class="plugin-icon">${plugin.icon}</div>
+                        <div class="plugin-name">${plugin.name}</div>
+                    `;
+                    
+                    option.addEventListener('click', () => {
+                        container.querySelectorAll('.plugin-option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        
+                        option.classList.add('selected');
+                        this.state.pluginRegistry.setSelectedType(plugin.type);
+                    });
+                    
+                    container.appendChild(option);
+                });
+            }
+            
+            _handleAddBlock() {
+                const selectedType = this.state.pluginRegistry.getSelectedType();
+                
+                // CORREÇÃO: Simplifcar a lógica de criação de blocos
+                const result = this.state.addBlock(selectedType, null);
+                if (result.isFailure) {
+                    console.error('Erro ao adicionar bloco:', result.error);
+                }
+            }
+            
+            _handleScaleChange(event) {
+                const scaleIndex = parseInt(event.target.value) - 1;
+                const scaleOption = SCALE_OPTIONS[scaleIndex];
+                
+                if (scaleOption) {
+                    const result = this.state.updateConfig({ typographicRatio: scaleOption.value });
+                    if (result.isFailure) {
+                        console.error('Erro ao atualizar escala:', result.error);
+                    }
+                }
+            }
+            
+            _handleContrastChange(event) {
+                const contrast = parseInt(event.target.value);
+                this.state.updateConfig({ globalContrast: contrast });
+            }
+            
+            _handleBlockInput(event) {
+                if (event.target.classList.contains('block-content-input')) {
+                    const blockEl = event.target.closest('.block-control');
+                    if (blockEl) {
+                        const id = blockEl.dataset.id;
+                        // CORREÇÃO: Passar o valor diretamente como string para blocos de texto
+                        this.state.updateBlock(id, { content: event.target.value });
+                    }
+                } else if (event.target.classList.contains('block-image-input')) {
+                    const blockEl = event.target.closest('.block-control');
+                    if (blockEl) {
+                        const id = blockEl.dataset.id;
+                        const container = event.target.parentElement;
+                        const inputs = container.querySelectorAll('.block-image-input');
+                        
+                        const data = {
+                            src: inputs[0]?.value || '',
+                            alt: inputs[1]?.value || 'Imagem'
+                        };
+                        
+                        this.state.updateBlock(id, { content: data });
+                    }
+                }
+            }
+            
+            _handleBlockClick(event) {
+                if (event.target.classList.contains('block-remove-btn')) {
+                    const blockEl = event.target.closest('.block-control');
+                    if (blockEl) {
+                        const id = blockEl.dataset.id;
+                        this.state.removeBlock(id);
+                    }
+                }
+            }
+            
+            _renderBlockControls(blocks) {
+                const container = document.getElementById('blocksListContainer');
+                if (!container) return;
+                
+                const config = this.state.config$.value;
+                const blocksWithHierarchy = this._calculateHierarchy(blocks, config);
+                
+                container.innerHTML = '';
+                
+                blocksWithHierarchy.forEach(block => {
+                    const plugin = this.state.pluginRegistry.get(block.type);
+                    
+                    const controlEl = document.createElement('div');
+                    controlEl.className = `block-control ${block.type}`;
+                    controlEl.dataset.id = block.id;
+                    
+                    const editor = plugin ? plugin.createEditor(block) : this._createFallbackEditor(block);
+                    
+                    controlEl.innerHTML = `
+                        <div class="drag-handle" title="Arrastar para reordenar">⋮⋮</div>
+                        <div class="block-content">
+                            <div class="block-header">
+                                <div class="block-type-info">
+                                    <span class="block-type-icon">${plugin?.icon || '❓'}</span>
+                                    <span class="hierarchy-value">Hierarquia ${block.hierarchy}</span>
+                                </div>
+                                <button class="block-remove-btn" title="Remover Bloco">&times;</button>
+                            </div>
+                            <div class="block-editor-container"></div>
+                        </div>
+                    `;
+                    
+                    const editorContainer = controlEl.querySelector('.block-editor-container');
+                    editorContainer.appendChild(editor);
+                    
+                    container.appendChild(controlEl);
+                });
+                
+                this._initializeSortable();
+            }
+            
+            _createFallbackEditor(block) {
+                const textarea = document.createElement('textarea');
+                textarea.className = 'block-content-input';
+                textarea.rows = 2;
+                textarea.value = `Plugin ${block.type} não encontrado`;
+                textarea.disabled = true;
+                return textarea;
+            }
+            
+            _initializeSortable() {
+                const container = document.getElementById('blocksListContainer');
+                if (!container) return;
+                
+                if (this.sortableInstance) {
+                    this.sortableInstance.destroy();
+                }
+                
+                this.sortableInstance = Sortable.create(container, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    handle: '.drag-handle',
+                    onEnd: (evt) => {
+                        this.state.reorderBlocks(evt.oldIndex, evt.newIndex);
+                    }
+                });
+            }
+            
+            _updateConfigUI(config) {
+                const contrastSlider = document.getElementById('contrast-slider');
+                const scaleSlider = document.getElementById('scale-slider');
+                
+                if (contrastSlider) {
+                    contrastSlider.value = config.globalContrast;
+                }
+                
+                const scaleIndex = SCALE_OPTIONS.findIndex(s => 
+                    Math.abs(s.value - config.typographicRatio) < 0.001
+                );
+                
+                const validScaleIndex = scaleIndex >= 0 ? scaleIndex : 0;
+                
+                if (scaleSlider) {
+                    scaleSlider.value = validScaleIndex + 1;
+                }
+                
+                const scaleLabel = document.getElementById('scale-label');
+                const contrastLabel = document.getElementById('contrast-label');
+                const contrastLabels = ["Pianissimo", "Piano", "Mezzo-forte", "Forte", "Fortissimo"];
+                
+                if (scaleLabel) {
+                    scaleLabel.textContent = SCALE_OPTIONS[validScaleIndex]?.name || 'Suave';
+                }
+                
+                if (contrastLabel) {
+                    contrastLabel.textContent = contrastLabels[config.globalContrast - 1] || 'Mezzo-forte';
+                }
+            }
+            
+            _calculateHierarchy(blocks, config) {
+                const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
+                
+                if (sortedBlocks.length < 2) {
+                    return sortedBlocks.map(block => ({ ...block, hierarchy: 5 }));
+                }
+                
+                const highestHierarchy = 5;
+                const lowestHierarchy = Math.max(1, 6 - config.globalContrast);
+                const range = highestHierarchy - lowestHierarchy;
+                const steps = sortedBlocks.length - 1;
+                
+                return sortedBlocks.map((block, index) => {
+                    const hierarchy = steps === 0 ? 
+                        highestHierarchy : 
+                        highestHierarchy - (index * range / steps);
+                        
+                    return { ...block, hierarchy: Math.round(hierarchy) };
+                });
+            }
+            
+            _renderErrors(errors) {
+                const container = document.getElementById('errorContainer');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                errors.forEach(error => {
+                    const errorEl = document.createElement('div');
+                    errorEl.className = 'error-message';
+                    errorEl.textContent = error.message;
+                    container.appendChild(errorEl);
+                });
+            }
+            
+            _updateStatus(status) {
+                const indicator = document.getElementById('statusIndicator');
+                const text = document.getElementById('statusText');
+                
+                if (indicator && text) {
+                    indicator.className = 'status-indicator';
+                    
+                    switch (status) {
+                        case 'success':
+                            text.textContent = 'Sistema Operacional';
+                            break;
+                        case 'error':
+                            indicator.classList.add('error');
+                            text.textContent = 'Erro Detectado';
+                            break;
+                        case 'warning':
+                            indicator.classList.add('warning');
+                            text.textContent = 'Atenção Requerida';
+                            break;
+                    }
+                }
+            }
+            
+            _updateDebugInfo() {
+                this.debugDebouncer.execute(() => {
+                    const debugElement = document.getElementById('debugInfo');
+                    if (!debugElement) return;
+                    
+                    const blocks = this.state.blocks$.value;
+                    const layout = this.state.layout$.value;
+                    
+                    const info = {
+                        'Blocos': blocks.length,
+                        'Tipos': [...new Set(blocks.map(b => b.type))].join(',').substring(0, 10),
+                        'Plugins': this.state.pluginRegistry.getAll().length,
+                        'Contraste': this.state.config$.value.globalContrast,
+                        'Escala': this._getScaleName(this.state.config$.value.typographicRatio),
+                        'Estratégia': layout?.value?.strategy?.substring(0, 8) || 'N/A',
+                        'Erros': this.state.errors$.value.length,
+                        'Layout': layout?.isSuccess ? 'OK' : 'ERR',
+                        'Zoom': layout?.value?.zoom?.toFixed(2) || 'N/A',
+                        'Status': 'CORRIGIDO'
+                    };
+                    
+                    debugElement.innerHTML = Object.entries(info)
+                        .map(([key, value]) => 
+                            `<div class="debug-item">
+                                <span class="debug-key">${key}:</span>
+                                <span class="debug-value">${value}</span>
+                            </div>`
+                        ).join('');
+                });
+            }
+            
+            _getScaleName(ratio) {
+                const option = SCALE_OPTIONS.find(s => 
+                    Math.abs(s.value - ratio) < 0.001
+                );
+                return option ? option.name.substring(0, 4) : 'N/A';
+            }
+        }
+        // ===== CORTE: src/ui/enhancedUIController.js - FIM =====
+        
+        // ===== INICIALIZAÇÃO - MOVER PARA src/app.js =====
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                window.cardCreator = new EnhancedUIController();
+                console.log('✅ Card Creator v4.1 (CORRIGIDO) inicializado com sucesso');
+                console.log('🔧 Bug de validação de string corrigido');
+                console.log('📦 Plugins disponíveis:', window.cardCreator.state.pluginRegistry.getAll().map(p => p.name));
+                console.log('🧪 Teste: Adicione um bloco de texto - deve funcionar normalmente agora');
+            } catch (error) {
+                console.error('❌ Erro na inicialização:', error);
+                
+                const container = document.getElementById('cardContent');
+                if (container) {
+                    container.innerHTML = '<div style="color: red;">Erro crítico na inicialização da Fase 2</div>';
+                }
+            }
+        });
+        // ===== INICIALIZAÇÃO - FIM =====
+        
+    </script>
+</body>
+</html>
+        
