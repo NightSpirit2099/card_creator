@@ -9,6 +9,7 @@ export class EnhancedUIController {
                 this.renderer = new EnhancedLayoutRenderer();
                 this.sortableInstance = null;
                 this.debugDebouncer = new Debouncer(100);
+                this.inputDebouncer = new Debouncer(300);
                 
                 this._initializeEventListeners();
                 this._initializeStateSubscriptions();
@@ -142,7 +143,9 @@ export class EnhancedUIController {
                     if (blockEl) {
                         const id = blockEl.dataset.id;
                         // CORREÇÃO: Passar o valor diretamente como string para blocos de texto
-                        this.state.updateBlock(id, { content: event.target.value });
+                        this.inputDebouncer.execute(() => {
+                            this.state.updateBlock(id, { content: event.target.value });
+                        });
                     }
                 } else if (event.target.classList.contains('block-image-input')) {
                     const blockEl = event.target.closest('.block-control');
