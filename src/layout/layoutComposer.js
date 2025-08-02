@@ -2,9 +2,10 @@ import { Result } from '../utils/result.js';
 import { CardCreatorError, LayoutError, ValidationError } from '../utils/customErrors.js';
 
 export class LayoutComposer {
-            constructor(blocks, ratio) {
+            constructor(blocks, ratio, width) {
                 this.blocks = [...blocks].sort((a, b) => b.hierarchy - a.hierarchy);
                 this.ratio = ratio;
+                this.width = width || 336;
             }
             
             async findBestCandidate() {
@@ -58,7 +59,7 @@ export class LayoutComposer {
                 return new Promise((resolve, reject) => {
                     try {
                         const testContainer = document.createElement('div');
-                        testContainer.style.cssText = 'position: absolute; visibility: hidden; width: 336px;';
+                        testContainer.style.cssText = `position: absolute; visibility: hidden; width: ${this.width}px;`;
                         document.body.appendChild(testContainer);
                         
                         const lowestHierarchy = Math.min(...this.blocks.map(b => b.hierarchy));
@@ -131,7 +132,7 @@ export class LayoutComposer {
                 }
                 totalBadness += lineCountPenalty;
                 
-                const requiredZoom = 336 / totalBlueprintHeight;
+                const requiredZoom = this.width / totalBlueprintHeight;
                 if (requiredZoom < 0.9) {
                     totalBadness += Math.pow(1 - requiredZoom, 2) * 50000;
                 }

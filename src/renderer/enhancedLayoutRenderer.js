@@ -44,7 +44,7 @@ export class EnhancedLayoutRenderer {
                                 fontSize: finalSize,
                                 lineHeight: layout.lineHeight,
                                 zoom: layout.zoom,
-                                width: 336
+                                width: layout.width || 336
                             };
                             
                             const element = plugin.render(block, context);

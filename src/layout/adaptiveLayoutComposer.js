@@ -21,7 +21,7 @@ export class TextOptimizedStrategy extends LayoutStrategy {
     }
     
     async compose(blocks, context) {
-        const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+        const composer = new LayoutComposer(blocks, context.config.typographicRatio, context.width);
         return composer.findBestCandidate();
     }
 }
@@ -32,7 +32,7 @@ export class MixedContentStrategy extends LayoutStrategy {
     }
     
     async compose(blocks, context) {
-        const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+        const composer = new LayoutComposer(blocks, context.config.typographicRatio, context.width);
         const result = await composer.findBestCandidate();
         
         if (result.isSuccess) {
@@ -51,7 +51,7 @@ export class BalancedStrategy extends LayoutStrategy {
     }
     
     async compose(blocks, context) {
-        const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+        const composer = new LayoutComposer(blocks, context.config.typographicRatio, context.width);
         return composer.findBestCandidate();
     }
 }
@@ -73,20 +73,23 @@ export class AdaptiveLayoutComposer {
                 return Result.failure(new LayoutError('Nenhum bloco fornecido'));
             }
             
+            const width = (config.cardWidth || 400) - 64;
+
             const analysis = this.contentAnalyzer.analyze(blocks);
             const strategy = this.selectOptimalStrategy(analysis, config);
             const blocksWithHierarchy = this._calculateHierarchy(blocks, config);
-            
+
             const candidateResult = await strategy.compose(blocksWithHierarchy, {
                 config,
-                analysis
+                analysis,
+                width
             });
             
             if (candidateResult.isFailure) {
                 return candidateResult;
             }
             
-            const optimizer = new LayoutOptimizer(blocksWithHierarchy, candidateResult.value);
+            const optimizer = new LayoutOptimizer(blocksWithHierarchy, candidateResult.value, width);
             const finalResult = await optimizer.optimizeZoom();
             
             if (finalResult.isSuccess) {
