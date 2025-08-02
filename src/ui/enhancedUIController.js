@@ -26,6 +26,7 @@ export class EnhancedUIController {
                 
                 const scaleSlider = document.getElementById('scale-slider');
                 const contrastSlider = document.getElementById('contrast-slider');
+                const formatSelector = document.getElementById('format-selector');
                 
                 if (scaleSlider) {
                     scaleSlider.addEventListener('input', (e) => this._handleScaleChange(e));
@@ -33,6 +34,10 @@ export class EnhancedUIController {
                 
                 if (contrastSlider) {
                     contrastSlider.addEventListener('input', (e) => this._handleContrastChange(e));
+                }
+
+                if (formatSelector) {
+                    formatSelector.addEventListener('change', (e) => this._handleFormatChange(e));
                 }
                 
                 const controlsPanel = document.getElementById('controls-panel');
@@ -75,6 +80,8 @@ export class EnhancedUIController {
             _renderInitialUI() {
                 this._renderBlockControls(this.state.blocks$.value);
                 this._updateConfigUI(this.state.config$.value);
+                document.documentElement.style.setProperty('--card-width', `${this.state.config$.value.cardWidth}px`);
+                document.documentElement.style.setProperty('--card-height', `${this.state.config$.value.cardHeight}px`);
             }
             
             _renderPluginSelector() {
@@ -135,6 +142,15 @@ export class EnhancedUIController {
             _handleContrastChange(event) {
                 const contrast = parseInt(event.target.value);
                 this.state.updateConfig({ globalContrast: contrast });
+            }
+
+            _handleFormatChange(event) {
+                const [w, h] = event.target.value.split('x').map(v => parseInt(v));
+                if (w && h) {
+                    document.documentElement.style.setProperty('--card-width', `${w}px`);
+                    document.documentElement.style.setProperty('--card-height', `${h}px`);
+                    this.state.updateConfig({ cardWidth: w, cardHeight: h });
+                }
             }
             
             _handleBlockInput(event) {
@@ -245,6 +261,7 @@ export class EnhancedUIController {
             _updateConfigUI(config) {
                 const contrastSlider = document.getElementById('contrast-slider');
                 const scaleSlider = document.getElementById('scale-slider');
+                const formatSelector = document.getElementById('format-selector');
                 
                 if (contrastSlider) {
                     contrastSlider.value = config.globalContrast;
@@ -258,6 +275,10 @@ export class EnhancedUIController {
                 
                 if (scaleSlider) {
                     scaleSlider.value = validScaleIndex + 1;
+                }
+
+                if (formatSelector) {
+                    formatSelector.value = `${config.cardWidth}x${config.cardHeight}`;
                 }
                 
                 const scaleLabel = document.getElementById('scale-label');

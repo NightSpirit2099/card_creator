@@ -32,7 +32,9 @@ export class EnhancedCardState {
                 
                 this.config$ = new SimpleObservable({
                     globalContrast: 3,
-                    typographicRatio: 1.250
+                    typographicRatio: 1.250,
+                    cardWidth: 400,
+                    cardHeight: 400
                 });
                 
                 this.layout$ = new SimpleObservable(null);
@@ -201,6 +203,10 @@ export class EnhancedCardState {
                     
                     if (newConfig.typographicRatio < 1.1 || newConfig.typographicRatio > 2.0) {
                         throw new ValidationError('Ratio tipográfico deve estar entre 1.1 e 2.0');
+                    }
+
+                    if (newConfig.cardWidth < 100 || newConfig.cardHeight < 100) {
+                        throw new ValidationError('Dimensões do card devem ser maiores que 100px');
                     }
                     
                     this.config$.value = newConfig;

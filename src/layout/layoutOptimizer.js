@@ -2,9 +2,10 @@ import { Result } from '../utils/result.js';
 import { CardCreatorError, LayoutError, ValidationError } from '../utils/customErrors.js';
 
 export class LayoutOptimizer {
-            constructor(blocks, layout) {
+            constructor(blocks, layout, width) {
                 this.blocks = blocks;
                 this.layout = layout;
+                this.width = width || 336;
             }
             
             async optimizeZoom() {
@@ -28,6 +29,7 @@ export class LayoutOptimizer {
                     return Result.success({
                         ...this.layout,
                         zoom: bestZoom,
+                        width: this.width,
                         blocks: this.blocks
                     });
                     
@@ -42,7 +44,7 @@ export class LayoutOptimizer {
                 return new Promise((resolve, reject) => {
                     try {
                         const testContainer = document.createElement('div');
-                        testContainer.style.cssText = 'position: absolute; visibility: hidden; width: 336px;';
+                        testContainer.style.cssText = `position: absolute; visibility: hidden; width: ${this.width}px;`;
                         document.body.appendChild(testContainer);
                         
                         const lowestHierarchy = Math.min(...this.blocks.map(b => b.hierarchy));
@@ -68,7 +70,7 @@ export class LayoutOptimizer {
                             totalHeight += el.offsetHeight;
                         }
                         
-                        const fits = totalHeight + totalGapHeight <= 336;
+                        const fits = totalHeight + totalGapHeight <= this.width;
                         document.body.removeChild(testContainer);
                         resolve(fits);
                         
