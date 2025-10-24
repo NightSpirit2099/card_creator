@@ -1,0 +1,59 @@
+{
+  "config": {
+    "globalContrast": 3,
+    "typographicRatio": 1.25
+  },
+  "layout": {
+    "baseFontSize": 20,
+    "lineHeight": 1.1,
+    "badness": 23125,
+    "ratio": 1.25,
+    "zoom": 1.535546875,
+    "blocks": [
+      {
+        "id": "1",
+        "type": "text",
+        "order": 1,
+        "content": {
+          "type": "text",
+          "data": {
+            "text": "Explorando o Futuro da IA"
+          }
+        },
+        "hierarchy": 5
+      },
+      {
+        "id": "2",
+        "type": "text",
+        "order": 2,
+        "content": {
+          "type": "text",
+          "data": {
+            "text": "Como a IA Generativa Molda Horizontes"
+          }
+        },
+        "hierarchy": 4
+      },
+      {
+        "id": "3",
+        "type": "text",
+        "order": 3,
+        "content": {
+          "type": "text",
+          "data": {
+            "text": "Última atualização: 31 de julho de 2025"
+          }
+        },
+        "hierarchy": 3
+      }
+    ],
+    "strategy": "balanced",
+    "analysis": {
+      "hasImages": false,
+      "hasOnlyText": true,
+      "textDensity": 1,
+      "totalBlocks": 3,
+      "dominantType": "text"
+    }
+  }
+}

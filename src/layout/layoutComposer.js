@@ -2,9 +2,10 @@ import { Result } from '../utils/result.js';
 import { CardCreatorError, LayoutError, ValidationError } from '../utils/customErrors.js';
 
 export class LayoutComposer {
-            constructor(blocks, ratio) {
+            constructor(blocks, ratio, measurementProvider) {
                 this.blocks = [...blocks].sort((a, b) => b.hierarchy - a.hierarchy);
                 this.ratio = ratio;
+                this.measurementProvider = measurementProvider;
             }
             
             async findBestCandidate() {
@@ -55,58 +56,60 @@ export class LayoutComposer {
             }
             
             async _evaluateCandidate(candidate) {
-                return new Promise((resolve, reject) => {
-                    try {
-                        const testContainer = document.createElement('div');
-                        testContainer.style.cssText = 'position: absolute; visibility: hidden; width: 336px;';
-                        document.body.appendChild(testContainer);
-                        
-                        const lowestHierarchy = Math.min(...this.blocks.map(b => b.hierarchy));
-                        const targetSizes = this.blocks.map(block => 
-                            candidate.baseFontSize * Math.pow(this.ratio, block.hierarchy - lowestHierarchy)
-                        );
-                        
-                        let totalHeight = 0;
-                        const actualSizes = [];
-                        const lineCounts = [];
-                        const baseGap = candidate.baseFontSize * candidate.lineHeight * 0.5;
-                        const totalGapHeight = (this.blocks.length - 1) * baseGap;
-                        
-                        for (let i = 0; i < this.blocks.length; i++) {
-                            const el = document.createElement('div');
-                            el.style.cssText = `font-size: ${targetSizes[i]}px; line-height: ${candidate.lineHeight};`;
-                            
-                            // Handle different block types
-                            if (this.blocks[i].content?.data?.text) {
-                                el.textContent = this.blocks[i].content.data.text;
-                            } else if (this.blocks[i].content) {
-                                el.textContent = this.blocks[i].content;
-                            } else {
-                                el.textContent = 'Sample text';
-                            }
-                            
-                            testContainer.appendChild(el);
-                            
-                            actualSizes[i] = parseFloat(window.getComputedStyle(el).fontSize);
-                            totalHeight += el.offsetHeight;
-                            lineCounts[i] = Math.round(el.offsetHeight / (actualSizes[i] * candidate.lineHeight));
+                try {
+                    const lowestHierarchy = Math.min(...this.blocks.map(b => b.hierarchy));
+                    const targetSizes = this.blocks.map(block =>
+                        candidate.baseFontSize * Math.pow(this.ratio, block.hierarchy - lowestHierarchy)
+                    );
+
+                    let totalHeight = 0;
+                    const actualSizes = [];
+                    const lineCounts = [];
+                    const baseGap = candidate.baseFontSize * candidate.lineHeight * 0.5;
+                    const totalGapHeight = (this.blocks.length - 1) * baseGap;
+
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        const block = this.blocks[i];
+                        const fontSize = targetSizes[i];
+
+                        // Get text content from block
+                        let text;
+                        if (block.content?.data?.text) {
+                            text = block.content.data.text;
+                        } else if (block.content) {
+                            text = block.content;
+                        } else {
+                            text = 'Sample text';
                         }
-                        
-                        const totalBlueprintHeight = totalHeight + totalGapHeight;
-                        const badness = this._calculateBadness({
-                            actualSizes,
-                            targetSizes,
-                            lineCounts,
-                            totalBlueprintHeight
+
+                        // Measure using the provider
+                        const height = await this.measurementProvider.measureTextHeight(text, {
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            fontSize: fontSize,
+                            lineHeight: candidate.lineHeight,
+                            width: 336,
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-word'
                         });
-                        
-                        document.body.removeChild(testContainer);
-                        resolve({ badness });
-                        
-                    } catch (error) {
-                        reject(new LayoutError('Erro na avaliação do candidato: ' + error.message));
+
+                        actualSizes[i] = fontSize; // In this abstraction, we assume the font size is applied as-is
+                        totalHeight += height;
+                        lineCounts[i] = Math.round(height / (fontSize * candidate.lineHeight));
                     }
-                });
+
+                    const totalBlueprintHeight = totalHeight + totalGapHeight;
+                    const badness = this._calculateBadness({
+                        actualSizes,
+                        targetSizes,
+                        lineCounts,
+                        totalBlueprintHeight
+                    });
+
+                    return { badness };
+
+                } catch (error) {
+                    throw new LayoutError('Erro na avaliação do candidato: ' + error.message);
+                }
             }
             
             _calculateBadness({ actualSizes, targetSizes, lineCounts, totalBlueprintHeight }) {

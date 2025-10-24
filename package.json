@@ -1,0 +1,35 @@
+{
+  "name": "card-creator",
+  "version": "4.1.0",
+  "description": "Adaptive Card Layout Engine with CLI support",
+  "type": "module",
+  "main": "src/engine/cardLayoutEngine.js",
+  "bin": {
+    "card-creator": "./bin/card-creator.js"
+  },
+  "scripts": {
+    "dev": "node -e \"console.log('Open index.html in browser to run the app')\"",
+    "cli": "node bin/card-creator.js",
+    "example": "node bin/card-creator.js examples/input-example.json -o examples/output-example.json"
+  },
+  "keywords": [
+    "adaptive-cards",
+    "layout-engine",
+    "typography",
+    "cli",
+    "node-canvas"
+  ],
+  "author": "NightSpirit2099",
+  "license": "MIT",
+  "dependencies": {},
+  "optionalDependencies": {
+    "canvas": "^2.11.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NightSpirit2099/card_creator.git"
+  }
+}

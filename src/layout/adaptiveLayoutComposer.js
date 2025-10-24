@@ -19,9 +19,13 @@ export class TextOptimizedStrategy extends LayoutStrategy {
     constructor() {
         super('text-optimized');
     }
-    
+
     async compose(blocks, context) {
-        const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+        const composer = new LayoutComposer(
+            blocks,
+            context.config.typographicRatio,
+            context.measurementProvider
+        );
         return composer.findBestCandidate();
     }
 }
@@ -30,17 +34,21 @@ export class MixedContentStrategy extends LayoutStrategy {
     constructor() {
         super('mixed-content');
     }
-    
+
     async compose(blocks, context) {
-        const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+        const composer = new LayoutComposer(
+            blocks,
+            context.config.typographicRatio,
+            context.measurementProvider
+        );
         const result = await composer.findBestCandidate();
-        
+
         if (result.isSuccess) {
             const adjusted = { ...result.value };
             adjusted.baseFontSize = Math.max(adjusted.baseFontSize * 0.9, 6);
             return Result.success(adjusted);
         }
-        
+
         return result;
     }
 }
@@ -49,19 +57,24 @@ export class BalancedStrategy extends LayoutStrategy {
     constructor() {
         super('balanced');
     }
-    
+
     async compose(blocks, context) {
-        const composer = new LayoutComposer(blocks, context.config.typographicRatio);
+        const composer = new LayoutComposer(
+            blocks,
+            context.config.typographicRatio,
+            context.measurementProvider
+        );
         return composer.findBestCandidate();
     }
 }
 
 export class AdaptiveLayoutComposer {
-    constructor() {
+    constructor(measurementProvider) {
+        this.measurementProvider = measurementProvider;
         this.contentAnalyzer = new ContentAnalyzer();
         this.strategies = new Map();
         this.pluginRegistry = new BlockPluginRegistry();
-        
+
         this.strategies.set('text-optimized', new TextOptimizedStrategy());
         this.strategies.set('mixed-content', new MixedContentStrategy());
         this.strategies.set('balanced', new BalancedStrategy());
@@ -79,14 +92,19 @@ export class AdaptiveLayoutComposer {
             
             const candidateResult = await strategy.compose(blocksWithHierarchy, {
                 config,
-                analysis
+                analysis,
+                measurementProvider: this.measurementProvider
             });
-            
+
             if (candidateResult.isFailure) {
                 return candidateResult;
             }
-            
-            const optimizer = new LayoutOptimizer(blocksWithHierarchy, candidateResult.value);
+
+            const optimizer = new LayoutOptimizer(
+                blocksWithHierarchy,
+                candidateResult.value,
+                this.measurementProvider
+            );
             const finalResult = await optimizer.optimizeZoom();
             
             if (finalResult.isSuccess) {

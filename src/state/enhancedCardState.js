@@ -3,12 +3,12 @@ import { Debouncer } from '../utils/debouncer.js';
 import { TextBlockPlugin } from '../plugins/textBlockPlugin.js';
 import { ImageBlockPlugin } from '../plugins/imageBlockPlugin.js';
 import { BlockPluginRegistry } from '../plugins/pluginRegistry.js';
-import { AdaptiveLayoutComposer } from '../layout/adaptiveLayoutComposer.js';
 import { Result } from '../utils/result.js';
 import { CardCreatorError, LayoutError, ValidationError } from '../utils/customErrors.js';
 
 export class EnhancedCardState {
-            constructor() {
+            constructor(layoutEngine) {
+                this.layoutEngine = layoutEngine;
                 this.blocks$ = new SimpleObservable([
                     { 
                         id: '1', 
@@ -225,29 +225,28 @@ export class EnhancedCardState {
                 try {
                     const blocks = this.blocks$.value;
                     const config = this.config$.value;
-                    
+
                     if (blocks.length === 0) {
                         this.layout$.value = Result.success(null);
                         return;
                     }
-                    
-                    const layoutEngine = new AdaptiveLayoutComposer();
-                    const result = await layoutEngine.createLayout(blocks, config);
-                    
+
+                    const result = await this.layoutEngine.calculateLayout(blocks, config);
+
                     this.layout$.value = result;
-                    
+
                     if (result.isFailure) {
                         this._addError(result.error);
                     } else {
                         this._clearErrors();
                     }
-                    
+
                 } catch (error) {
                     const layoutError = new LayoutError(
                         'Erro inesperado no motor adaptativo: ' + error.message,
                         { blocks: this.blocks$.value, config: this.config$.value }
                     );
-                    
+
                     this.layout$.value = Result.failure(layoutError);
                     this._addError(layoutError);
                 }

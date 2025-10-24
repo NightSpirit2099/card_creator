@@ -1,0 +1,37 @@
+{
+  "blocks": [
+    {
+      "id": "1",
+      "type": "text",
+      "order": 1,
+      "content": {
+        "type": "text",
+        "data": {
+          "text": "Explorando o Futuro da IA"
+        }
+      }
+    },
+    {
+      "id": "2",
+      "type": "text",
+      "order": 2,
+      "content": {
+        "type": "text",
+        "data": {
+          "text": "Como a IA Generativa Molda Horizontes"
+        }
+      }
+    },
+    {
+      "id": "3",
+      "type": "text",
+      "order": 3,
+      "content": {
+        "type": "text",
+        "data": {
+          "text": "Última atualização: 31 de julho de 2025"
+        }
+      }
+    }
+  ]
+}

@@ -4,13 +4,13 @@ import { Debouncer } from '../utils/debouncer.js';
 import { SCALE_OPTIONS } from '../utils/constants.js';
 
 export class EnhancedUIController {
-            constructor() {
-                this.state = new EnhancedCardState();
+            constructor(layoutEngine) {
+                this.state = new EnhancedCardState(layoutEngine);
                 this.renderer = new EnhancedLayoutRenderer();
                 this.sortableInstance = null;
                 this.debugDebouncer = new Debouncer(100);
                 this.inputDebouncer = new Debouncer(300);
-                
+
                 this._initializeEventListeners();
                 this._initializeStateSubscriptions();
                 this._renderInitialUI();
