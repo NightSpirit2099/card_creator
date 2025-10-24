@@ -14,7 +14,7 @@ ehthumbs.db
 Thumbs.db
 
 # Editor files
-.vscode/
+# .vscode/ - Incluído no projeto para facilitar desenvolvimento
 .idea/
 *.swp
 *.swo

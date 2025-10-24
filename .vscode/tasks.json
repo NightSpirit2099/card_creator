@@ -1,0 +1,81 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Testar CLI - Exemplo",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "bin/card-creator.js",
+        "examples/input-example.json",
+        "-o",
+        "examples/output-test.json"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Testar CLI - Alto Contraste",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "bin/card-creator.js",
+        "examples/input-example.json",
+        "-o",
+        "examples/output-high-contrast.json",
+        "-c",
+        "5",
+        "-r",
+        "1.618"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Executar Todos os Testes CLI",
+      "type": "shell",
+      "command": "bash",
+      "args": ["test-cli.sh"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Iniciar Servidor HTTP",
+      "type": "shell",
+      "command": "python3",
+      "args": ["-m", "http.server", "8080"],
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^Serving HTTP on.*port (\\d+).*$",
+          "file": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Serving HTTP",
+          "endsPattern": "^Serving HTTP"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

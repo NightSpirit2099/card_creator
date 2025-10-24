@@ -1,0 +1,107 @@
+{
+  "Create Card Input JSON": {
+    "prefix": "card-input",
+    "body": [
+      "{",
+      "  \"blocks\": [",
+      "    {",
+      "      \"id\": \"${1:1}\",",
+      "      \"type\": \"${2|text,image|}\",",
+      "      \"order\": ${3:1},",
+      "      \"content\": {",
+      "        \"type\": \"${4:text}\",",
+      "        \"data\": {",
+      "          \"text\": \"${5:Your text here}\"",
+      "        }",
+      "      }",
+      "    }$0",
+      "  ]",
+      "}"
+    ],
+    "description": "Create a card input JSON structure"
+  },
+  "Create Text Block": {
+    "prefix": "block-text",
+    "body": [
+      "{",
+      "  \"id\": \"${1:1}\",",
+      "  \"type\": \"text\",",
+      "  \"order\": ${2:1},",
+      "  \"content\": {",
+      "    \"type\": \"text\",",
+      "    \"data\": {",
+      "      \"text\": \"${3:Your text here}\"",
+      "    }",
+      "  }",
+      "}$0"
+    ],
+    "description": "Create a text block object"
+  },
+  "Create Image Block": {
+    "prefix": "block-image",
+    "body": [
+      "{",
+      "  \"id\": \"${1:1}\",",
+      "  \"type\": \"image\",",
+      "  \"order\": ${2:1},",
+      "  \"content\": {",
+      "    \"type\": \"image\",",
+      "    \"data\": {",
+      "      \"src\": \"${3:https://example.com/image.jpg}\",",
+      "      \"alt\": \"${4:Image description}\",",
+      "      \"fit\": \"${5|cover,contain|}\"",
+      "    }",
+      "  }",
+      "}$0"
+    ],
+    "description": "Create an image block object"
+  },
+  "Import Layout Engine": {
+    "prefix": "import-engine",
+    "body": [
+      "import { ${1|DOMMeasurementProvider,NodeMeasurementProvider|} } from '${2:./src/measurement/${1:domMeasurementProvider}.js}';",
+      "import { CardLayoutEngine } from '${3:./src/engine/cardLayoutEngine.js}';",
+      "",
+      "const measurementProvider = new ${1:DOMMeasurementProvider}();",
+      "const engine = new CardLayoutEngine(measurementProvider);$0"
+    ],
+    "description": "Import and initialize the layout engine"
+  },
+  "Calculate Layout": {
+    "prefix": "calc-layout",
+    "body": [
+      "const blocks = [",
+      "  {",
+      "    id: '${1:1}',",
+      "    type: '${2:text}',",
+      "    order: ${3:1},",
+      "    content: {",
+      "      type: '${4:text}',",
+      "      data: { text: '${5:Your text}' }",
+      "    }",
+      "  }",
+      "];",
+      "",
+      "const config = {",
+      "  globalContrast: ${6:3},",
+      "  typographicRatio: ${7:1.25}",
+      "};",
+      "",
+      "const result = await engine.calculateLayout(blocks, config);",
+      "",
+      "if (result.isSuccess) {",
+      "  console.log('Layout:', result.value);",
+      "} else {",
+      "  console.error('Error:', result.error);",
+      "}$0"
+    ],
+    "description": "Calculate layout using the engine"
+  },
+  "CLI Test Command": {
+    "prefix": "cli-test",
+    "body": [
+      "node bin/card-creator.js ${1:examples/input-example.json} -o ${2:output.json} -c ${3:3} -r ${4:1.25}$0"
+    ],
+    "description": "CLI test command"
+  }
+}

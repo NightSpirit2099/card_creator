@@ -1,0 +1,69 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug CLI",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/bin/card-creator.js",
+      "args": [
+        "examples/input-example.json",
+        "-o",
+        "examples/output-debug.json"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug CLI - Custom Args",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/bin/card-creator.js",
+      "args": [
+        "${input:inputFile}",
+        "-o",
+        "${input:outputFile}",
+        "-c",
+        "${input:contrast}",
+        "-r",
+        "${input:ratio}"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug Web App",
+      "url": "http://localhost:5500",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "inputFile",
+      "type": "promptString",
+      "description": "Arquivo de entrada (JSON)",
+      "default": "examples/input-example.json"
+    },
+    {
+      "id": "outputFile",
+      "type": "promptString",
+      "description": "Arquivo de saída (JSON)",
+      "default": "output.json"
+    },
+    {
+      "id": "contrast",
+      "type": "promptString",
+      "description": "Contraste (1-5)",
+      "default": "3"
+    },
+    {
+      "id": "ratio",
+      "type": "promptString",
+      "description": "Razão tipográfica (1.1-2.0)",
+      "default": "1.25"
+    }
+  ]
+}
